@@ -13,7 +13,7 @@ $(document).ready(function() {
 
     moveStream.onValue(function(moveV) {
         game.movePacman(moveV);
-        game.tick();
+        //game.tick();
     });
     
     var ghostStream = Bacon.sequentially(800, [
@@ -33,8 +33,18 @@ $(document).ready(function() {
 
     updateStream.subscribe(function() {
         game.updateGame();
+        //game.tick();
+    });
+
+    var combinedTickStream = new Bacon.Bus();
+
+    combinedTickStream.plug(moveStream);
+    combinedTickStream.plug(updateStream);
+
+    combinedTickStream.subscribe(function() {
         game.tick();
     });
+
 
     
     game.start();

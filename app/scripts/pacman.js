@@ -179,6 +179,14 @@ PacmanGame.prototype.spawnGhost = function(color) {
 };
 
 PacmanGame.prototype.moveGhost = function(ghost) {
+    var wrapPos = this.findWrapPos(ghost.x + ghost.v.x, ghost.y + ghost.v.y);
+
+    if (wrapPos) {
+        ghost.x = wrapPos.x;
+        ghost.y = wrapPos.y;
+        return;
+    }
+    
     var nextVs = this.availableDirections(ghost.x, ghost.y);
 
     // protect against going backwards
