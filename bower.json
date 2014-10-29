@@ -1,0 +1,9 @@
+{
+  "name": "pacman-unicode",
+  "private": true,
+  "dependencies": {
+    "jquery": "~1.11.1",
+    "unicodetiles.js": "tapio/unicodetiles.js",
+    "bacon": "~0.7.25"
+  }
+}
