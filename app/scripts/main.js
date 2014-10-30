@@ -16,7 +16,7 @@ $(document).ready(function() {
         //game.tick();
     });
     
-    var ghostStream = Bacon.sequentially(800, [
+    var spawnStream = Bacon.sequentially(800, [
         PacmanGame.GhostColors.ORANGE,
         PacmanGame.GhostColors.BLUE,
         PacmanGame.GhostColors.GREEN,
@@ -24,22 +24,22 @@ $(document).ready(function() {
         PacmanGame.GhostColors.WHITE,
     ]).delay(2500);
 
-    ghostStream.onValue(function(ghost) {
+    spawnStream.onValue(function(ghost) {
         game.spawnGhost(ghost);
     });
 
-    var updateStream = Bacon.interval(1000, 0);
+    var ghostStream = Bacon.interval(1000, 0);
 
 
-    updateStream.subscribe(function() {
-        game.updateGame();
+    ghostStream.subscribe(function() {
+        game.updateGhosts();
         //game.tick();
     });
 
     var combinedTickStream = new Bacon.Bus();
 
     combinedTickStream.plug(moveStream);
-    combinedTickStream.plug(updateStream);
+    combinedTickStream.plug(ghostStream);
 
     combinedTickStream.subscribe(function() {
         game.tick();

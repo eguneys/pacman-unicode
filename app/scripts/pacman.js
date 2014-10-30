@@ -6,6 +6,14 @@ function PacmanGame(parent) {
     
     this.term = null;
 
+    this.termConfig = {
+        hud: { x: 3, y: 1 },
+        gameArea: { x: 3, y: 3 }
+    };
+
+    this.score = 0;
+    this.highScore = 0;
+
     this.p1 = null;
     this.ghosts = null;
     this.map = null;
@@ -17,13 +25,21 @@ function PacmanGame(parent) {
 
 
     this.TilePoint = new ut.Tile('▪', 150, 0, 150);
-    this.TileWall = new ut.Tile('▓', 100, 100, 100);
+    this.TileBigP = new ut.Tile('O', 150, 0, 150);
+    
+    this.TileWall = new ut.Tile(' ', 0, 0, 0, 100, 100, 100);
 
     this.TileEmpty = new ut.Tile(' ', 100, 100, 100);
 
+    var hudbg = PacmanGame.HudColors.BG;
+    this.TileHudBG = new ut.Tile(' ', 0, 0, 0, hudbg.r, hudbg.g, hudbg.b);
 
     this.onPacmanMove = null;
 }
+
+PacmanGame.HudColors = {
+    BG: { r: 94, g: 39, b: 40 }
+};
 
 PacmanGame.GhostColors = {
     ORANGE: 1,
@@ -31,6 +47,13 @@ PacmanGame.GhostColors = {
     GREEN: 3,
     PURPLE: 4,
     WHITE: 5
+};
+
+PacmanGame.PacmanTiles = {
+    WALL: '#',
+    POINT: '.',
+    BIGP: 'o',
+    'EMPTY': ' '
 };
 
 
@@ -43,7 +66,7 @@ PacmanGame.prototype.generateMap = function() {
     
     this.map = [
         '############################',
-        '#............##............#',
+        '#o...........##...........o#',
         '#.####.#####.##.#####.####.#',
         '#.####.#####.##.#####.####.#',
         '#..........................#',
@@ -62,7 +85,7 @@ PacmanGame.prototype.generateMap = function() {
         '###.##.#.##########.#.##.###',
         '#......#.....##.....#......#',
         '#.##########.##.##########.#',
-        '#..........................#',
+        '#o........................o#',
         '############################'
     ];
 
@@ -77,23 +100,24 @@ PacmanGame.prototype.generateMap = function() {
 };
 
 PacmanGame.prototype.getGhostTile = function(color) {
+    var tileChar = 'X';
     var tile;
     
     switch (color) {
     case PacmanGame.GhostColors.ORANGE:
-        tile = new ut.Tile('X', 150, 75, 0);
+        tile = new ut.Tile(tileChar, 150, 75, 0);
         break;
     case PacmanGame.GhostColors.BLUE:
-        tile = new ut.Tile('X', 0, 0, 100);
+        tile = new ut.Tile(tileChar, 0, 0, 100);
         break;
     case PacmanGame.GhostColors.GREEN:
-        tile = new ut.Tile('X', 0, 100, 0);
+        tile = new ut.Tile(tileChar, 0, 100, 0);
         break;
     case PacmanGame.GhostColors.PURPLE:
-        tile = new ut.Tile('X', 100, 0, 100);
+        tile = new ut.Tile(tileChar, 100, 0, 100);
         break;
     case PacmanGame.GhostColors.WHITE:
-        tile = new ut.Tile('X', 255, 255, 255);
+        tile = new ut.Tile(tileChar, 255, 255, 255);
         break;
     }
     return tile;
@@ -104,11 +128,13 @@ PacmanGame.prototype.getPacmanTile = function(x, y) {
     try { t = this.map[y][x]; }
     catch(err) { return ut.NULLTILE; }
     switch(t) {
-    case '.':
+    case PacmanGame.PacmanTiles.POINT:
         return this.TilePoint;
-    case '#':
+    case PacmanGame.PacmanTiles.BIGP:
+        return this.TileBigP;
+    case PacmanGame.PacmanTiles.WALL:
         return this.TileWall;
-    case ' ':
+    case PacmanGame.PacmanTiles.EMPTY:
         return this.TileEmpty;
     default:
         return ut.NULLTILE;
@@ -116,21 +142,51 @@ PacmanGame.prototype.getPacmanTile = function(x, y) {
     
 };
 
+PacmanGame.prototype.setPacmanTile = function(x, y, tile) {
+    var row = this.map[y];
+
+    this.map[y] = row.substr(0, x) + tile + row.substr(x + 1);
+};
+
+PacmanGame.prototype.putHud = function() {
+    var base = this.termConfig.hud;
+
+    for (var x = 0; x < this.map[0].length; x++) {
+        for (var y = 0; y < 2; y++) {
+            this.term.put(this.TileHudBG, base.x + x, base.y + y);
+        }
+    }
+
+    var hudbg = PacmanGame.HudColors.BG;
+    var halfLength = this.map[0].length / 2;
+
+    this.term.putString("High Score", base.x + halfLength, base.y, 255, 255, 255, hudbg.r, hudbg.g, hudbg.b);
+
+    this.term.putString(this.score.toString(), base.x + 2, base.y + 1, 255, 255, 255, hudbg.r, hudbg.g, hudbg.b);
+
+    this.term.putString(this.highScore.toString(), base.x + halfLength, base.y + 1, 255, 255, 255, hudbg.r, hudbg.g, hudbg.b);
+
+};
+
 PacmanGame.prototype.putTiles = function() {
+    var base = this.termConfig.gameArea;
+
     for (var y = 0; y < this.map.length; y++) {
         for (var x = 0; x< this.map[0].length; x++) {
-            this.term.put(this.getPacmanTile(x, y), x, y);
+            this.term.put(this.getPacmanTile(x, y), base.x + x, base.y + y);
         }
     }
 };
 
 PacmanGame.prototype.putMovables = function() {
-    this.term.put(this.p1.tile, this.p1.x, this.p1.y);
+    var base = this.termConfig.gameArea;
+
+    this.term.put(this.p1.tile, base.x + this.p1.x, base.y + this.p1.y);
 
     for (var i in this.ghosts) {
         var ghost = this.ghosts[i];
 
-        this.term.put(ghost.tile, ghost.x, ghost.y);
+        this.term.put(ghost.tile, base.x + ghost.x, base.y + ghost.y);
     }
 };
 
@@ -222,7 +278,9 @@ PacmanGame.prototype.availableDirections = function(x, y) {
 PacmanGame.prototype.canMoveTo = function(x, y) {
     var tile = this.getPacmanTile(x, y);
 
-    return (tile === this.TilePoint || tile === this.TileEmpty);
+    return (tile === this.TilePoint ||
+            tile === this.TileBigP ||
+            tile === this.TileEmpty);
 };
 
 PacmanGame.prototype.findWrapPos = function(x, y) {
@@ -238,11 +296,31 @@ PacmanGame.prototype.findWrapPos = function(x, y) {
     }
 };
 
-PacmanGame.prototype.updateGame = function() {
-    this.ghosts.forEach(function(g) { this.moveGhost(g); }, this);    
+PacmanGame.prototype.checkPacmanEat = function() {
+    var p1Tile = this.getPacmanTile(this.p1.x, this.p1.y);
+
+    if (p1Tile === this.TilePoint) {
+        this.setPacmanTile(this.p1.x, this.p1.y, PacmanGame.PacmanTiles.EMPTY);
+        this.score++;
+
+    } else if (p1Tile === this.TileBigP) {
+        this.setPacmanTile(this.p1.x, this.p1.y, PacmanGame.PacmanTiles.EMPTY);
+        this.score += 10;
+    }
+};
+
+PacmanGame.prototype.checkPacmanCaught = function() {
+    
+};
+
+PacmanGame.prototype.updateGhosts = function() {
+    this.ghosts.forEach(function(g) { this.moveGhost(g); }, this);
 };
 
 PacmanGame.prototype.tick = function() {
+    this.checkPacmanEat();
+    
+    this.putHud();
     this.putTiles();
     this.putMovables();
     this.term.render();
