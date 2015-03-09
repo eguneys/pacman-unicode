@@ -372,8 +372,10 @@ PacmanGame.prototype.onKeyDown = function(k) {
   case ut.KEY_D:
     moveV.x++;
     break;
+  case ut.KEY_SPACE:
+    moveV = null;
+    break;
   }
-
   if (typeof this.onPacmanMove === 'function') {
     this.onPacmanMove(moveV);
   }
