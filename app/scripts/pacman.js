@@ -16,6 +16,9 @@ function PacmanGame(parent, hs) {
   this.score = 0;
   this.highScore = hs || 0;
 
+  this.totalPoints = 0;
+  this.countPoints = 0;
+
   this.p1 = null;
   this.ghosts = null;
   this.map = null;
@@ -91,6 +94,13 @@ PacmanGame.prototype.generateMap = function() {
     '############################'
   ];
 
+  var totalPoints = 0;
+  this.map.forEach(function(s) {
+    totalPoints += s.split('.').length - 1;
+  });
+
+  this.totalPoints = totalPoints;
+  
   this.wrapPos = [
     { x: -1, y: 10,
       wrapTo: { x: 27, y: 10 }
@@ -320,7 +330,12 @@ PacmanGame.prototype.checkPacmanEat = function() {
   if (p1Tile === this.TilePoint) {
     this.setPacmanTile(this.p1.x, this.p1.y, PacmanGame.PacmanTiles.EMPTY);
     this.score++;
-
+    this.countPoints++;
+    
+    if (this.countPoints === this.totalPoints) {
+      this.score += 100;
+      this.setGameOver();
+    }
   } else if (p1Tile === this.TileBigP) {
     this.setPacmanTile(this.p1.x, this.p1.y, PacmanGame.PacmanTiles.EMPTY);
     this.score += 10;
