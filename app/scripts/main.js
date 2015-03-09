@@ -5,8 +5,8 @@ $(document).ready(function() {
   restartGame($('.game-area')[0]);
 });
 
-function restartGame(parent) {
-  var game = new PacmanGame(parent);
+function restartGame(parent, hs) {
+  var game = new PacmanGame(parent, hs);
 
   var moveStream = Bacon.fromBinder(function(sink) {
     game.onPacmanMove = function(moveV) {
@@ -16,7 +16,7 @@ function restartGame(parent) {
 
   moveStream.onValue(function(moveV) {
     if (!moveV) {
-      restartGame(parent);
+      restartGame(parent, game.highScore);
       return;
     }
     

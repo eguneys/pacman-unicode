@@ -1,7 +1,7 @@
 /* global ut */
 'use strict';
 
-function PacmanGame(parent) {
+function PacmanGame(parent, hs) {
   this.parent = parent;
   
   this.term = null;
@@ -14,7 +14,7 @@ function PacmanGame(parent) {
   this.gameOver = true;
 
   this.score = 0;
-  this.highScore = 0;
+  this.highScore = hs || 0;
 
   this.p1 = null;
   this.ghosts = null;
@@ -153,7 +153,7 @@ PacmanGame.prototype.setPacmanTile = function(x, y, tile) {
 PacmanGame.prototype.setGameOver = function() {
   this.p1.tile = new ut.Tile('Ⴖ', 255, 255, 255);
   this.gameOver = true;
-  this.highScore = this.score;
+  this.highScore = Math.max(this.highScore, this.score);
 };
 
 PacmanGame.prototype.putHud = function() {
@@ -373,7 +373,8 @@ PacmanGame.prototype.onKeyDown = function(k) {
     moveV.x++;
     break;
   case ut.KEY_SPACE:
-    moveV = null;
+    if (this.gameOver)
+      moveV = null;
     break;
   }
   if (typeof this.onPacmanMove === 'function') {
